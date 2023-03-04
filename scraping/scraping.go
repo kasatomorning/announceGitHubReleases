@@ -10,7 +10,7 @@ func scrape(url string) (nextPageURL string) {
 	getRelease := colly.NewCollector()
 	getRelease.OnHTML(".Link--primary", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
-		fmt.Println("Link found:", href)
+		fmt.Println("Release found:", href)
 	})
 	getRelease.OnRequest(func(r *colly.Request) {
 		fmt.Println("Scraping URL:", r.URL.String())
@@ -25,9 +25,7 @@ func scrape(url string) (nextPageURL string) {
 	getNextPage.OnHTML(".next_page", func(e *colly.HTMLElement) {
 		nextPageLink := e.Attr("href")
 		// reach the last page
-		if nextPageLink == "" {
-			fmt.Println("No more pages")
-		} else {
+		if nextPageLink != "" {
 			nextPageURL = "https://github.com/" + nextPageLink
 		}
 	})
@@ -35,13 +33,15 @@ func scrape(url string) (nextPageURL string) {
 		fmt.Println("Got this error:", e)
 	})
 	getNextPage.Visit(url)
+	if nextPageURL == "" {
+		fmt.Println("Reached the last page")
+	}
 	return
 }
 
 func main() {
-	url := "https://github.com/yt-dlp/yt-dlp/releases"
+	url := "https://github.com/mikf/gallery-dl/releases"
 	for url != "" {
-		fmt.Println(url)
 		url = scrape(url)
 	}
 }
