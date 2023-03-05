@@ -6,11 +6,12 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-func scrape(url string) (nextPageURL string) {
+func scrape(url string) (releaseArray []string) {
 	getRelease := colly.NewCollector()
 	getRelease.OnHTML(".Link--primary", func(e *colly.HTMLElement) {
-		href := e.Attr("href")
+		href := e.Text
 		fmt.Println("Release found:", href)
+		releaseArray = append(releaseArray, href)
 	})
 	getRelease.OnRequest(func(r *colly.Request) {
 		fmt.Println("Scraping URL:", r.URL.String())
@@ -19,7 +20,10 @@ func scrape(url string) (nextPageURL string) {
 		fmt.Println("Got this error:", e)
 	})
 	getRelease.Visit(url)
+	return
+}
 
+func getNextPage(url string) (nextPageURL string) {
 	getNextPage := colly.NewCollector()
 	nextPageURL = ""
 	getNextPage.OnHTML(".next_page", func(e *colly.HTMLElement) {
@@ -40,8 +44,14 @@ func scrape(url string) (nextPageURL string) {
 }
 
 func main() {
-	url := "https://github.com/mikf/gallery-dl/releases"
+	url := "https://github.com/yt-dlp/yt-dlp/releases"
+	pageURLs := []string{}
+	allReleasesArray := []string{}
 	for url != "" {
-		url = scrape(url)
+		pageURLs = append(pageURLs, url)
+		url = getNextPage(url)
+	}
+	for i := 0; i < len(pageURLs); i++ {
+		allReleasesArray = append(allReleasesArray, scrape(pageURLs[i])...)
 	}
 }
